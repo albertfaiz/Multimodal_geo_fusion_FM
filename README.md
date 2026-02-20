@@ -1,7 +1,11 @@
-The layout is given below for ease of use.
+I've included the layout below for you to have a look at.
 
 life-expectancy-multimodal-fusion/
-│
+
+
+
+
+
 ├── README.md                        # Main project README
 ├── LICENSE                          # MIT License
 ├── requirements.txt                 # Python dependencies
