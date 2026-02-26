@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Satellite Life Expectancy · Methodology</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,800;1,9..144,300;1,9..144,600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0a0d0f;
+  --paper: #f4f1eb;
+  --sat-blue: #0d6ebd;
+  --sat-cyan: #00c8e0;
+  --sat-green: #2dce6e;
+  --sat-amber: #f5a623;
+  --sat-red: #e84040;
+  --sat-violet: #7c5cbf;
+  --night: #001628;
+  --night-mid: #002a4a;
+  --night-rim: #004070;
+  --grid: rgba(0,200,224,0.08);
+  --mono: 'DM Mono', monospace;
+  --serif: 'Fraunces', Georgia, serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--night);
+  color: var(--paper);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* ── GRID BACKGROUND ─────────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── HERO ─────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  padding: 80px 48px 64px;
+  border-bottom: 1px solid var(--night-rim);
+  overflow: hidden;
+}
+
+.hero-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 60% 40%, rgba(0,200,224,0.07) 0%, transparent 70%),
+              radial-gradient(ellipse 40% 80% at 10% 80%, rgba(13,110,189,0.12) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(0,200,224,0.1);
+  border: 1px solid rgba(0,200,224,0.3);
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 11px;
+  color: var(--sat-cyan);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  animation: fadeSlideUp 0.6s ease both;
+}
+
+.hero-badge::before {
+  content: '';
+  width: 6px; height: 6px;
+  background: var(--sat-cyan);
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(1.4)} }
+@keyframes fadeSlideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+h1 {
+  font-family: var(--serif);
+  font-size: clamp(28px, 5vw, 52px);
+  font-weight: 800;
+  line-height: 1.1;
+  color: #fff;
+  max-width: 800px;
+  animation: fadeSlideUp 0.7s 0.1s ease both;
+}
+
+h1 em {
+  font-style: italic;
+  color: var(--sat-cyan);
+}
+
+.hero-sub {
+  margin-top: 20px;
+  max-width: 600px;
+  color: rgba(244,241,235,0.6);
+  font-size: 13px;
+  animation: fadeSlideUp 0.7s 0.2s ease both;
+}
+
+.hero-stats {
+  display: flex; flex-wrap: wrap; gap: 32px;
+  margin-top: 48px;
+  animation: fadeSlideUp 0.7s 0.3s ease both;
+}
+
+.stat {
+  display: flex; flex-direction: column; gap: 2px;
+}
+
+.stat-val {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1;
+}
+
+.stat-val span { color: var(--sat-cyan); }
+
+.stat-lbl {
+  font-size: 10px;
+  color: rgba(244,241,235,0.45);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── NAV TABS ─────────────────────────────────────────── */
+.tabs {
+  display: flex; gap: 0;
+  border-bottom: 1px solid var(--night-rim);
+  padding: 0 48px;
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(0,22,40,0.96);
+  backdrop-filter: blur(12px);
+}
+
+.tab {
+  padding: 14px 20px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(244,241,235,0.4);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.tab:hover { color: var(--paper); }
+.tab.active { color: var(--sat-cyan); border-bottom-color: var(--sat-cyan); }
+
+/* ── SECTIONS ─────────────────────────────────────────── */
+.section {
+  display: none;
+  padding: 56px 48px;
+  position: relative;
+  z-index: 1;
+  animation: fadeSlideUp 0.4s ease both;
+}
+
+.section.active { display: block; }
+
+.section-title {
+  font-family: var(--serif);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--sat-cyan);
+  margin-bottom: 8px;
+}
+
+.section-h2 {
+  font-family: var(--serif);
+  font-size: clamp(20px, 3vw, 32px);
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 32px;
+  line-height: 1.2;
+}
+
+/* ── PIPELINE FLOW ────────────────────────────────────── */
+.pipeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 900px;
+}
+
+.pipeline-step {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 24px;
+  position: relative;
+}
+
+.pipeline-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 39px; top: 56px; bottom: -8px;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--night-rim), transparent);
+}
+
+.step-num {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 800;
+  flex-shrink: 0;
+  margin-top: 4px;
+  position: relative;
+  z-index: 1;
+}
+
+.step-body {
+  padding: 4px 0 40px;
+}
+
+.step-label {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.step-desc {
+  color: rgba(244,241,235,0.6);
+  font-size: 12px;
+  line-height: 1.8;
+  max-width: 560px;
+}
+
+.step-tags {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-top: 12px;
+}
+
+.tag {
+  padding: 3px 10px;
+  border-radius: 3px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  border: 1px solid;
+}
+
+/* Step colors */
+.s1 .step-num { background: rgba(13,110,189,0.2); border: 2px solid var(--sat-blue); color: var(--sat-blue); }
+.s2 .step-num { background: rgba(0,200,224,0.15); border: 2px solid var(--sat-cyan); color: var(--sat-cyan); }
+.s3 .step-num { background: rgba(45,206,110,0.15); border: 2px solid var(--sat-green); color: var(--sat-green); }
+.s4 .step-num { background: rgba(245,166,35,0.15); border: 2px solid var(--sat-amber); color: var(--sat-amber); }
+.s5 .step-num { background: rgba(124,92,191,0.15); border: 2px solid var(--sat-violet); color: var(--sat-violet); }
+
+.tag-blue { background: rgba(13,110,189,0.15); border-color: rgba(13,110,189,0.4); color: #6ab4f5; }
+.tag-cyan { background: rgba(0,200,224,0.1); border-color: rgba(0,200,224,0.3); color: var(--sat-cyan); }
+.tag-green { background: rgba(45,206,110,0.1); border-color: rgba(45,206,110,0.3); color: var(--sat-green); }
+.tag-amber { background: rgba(245,166,35,0.1); border-color: rgba(245,166,35,0.3); color: var(--sat-amber); }
+.tag-violet { background: rgba(124,92,191,0.1); border-color: rgba(124,92,191,0.3); color: #b09ee8; }
+
+/* ── DATA STREAMS GRID ────────────────────────────────── */
+.streams-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.stream-card {
+  background: var(--night-mid);
+  border: 1px solid var(--night-rim);
+  border-radius: 8px;
+  padding: 20px;
+  transition: border-color 0.2s, transform 0.2s;
+  cursor: default;
+}
+
+.stream-card:hover {
+  border-color: var(--sat-cyan);
+  transform: translateY(-2px);
+}
+
+.stream-icon {
+  font-size: 22px;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.stream-name {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.stream-product {
+  font-size: 10px;
+  color: rgba(244,241,235,0.4);
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+}
+
+.stream-bar-wrap {
+  height: 4px;
+  background: var(--night-rim);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.stream-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 1s ease;
+}
+
+.stream-feat {
+  font-size: 10px;
+  color: rgba(244,241,235,0.5);
+}
+
+.stream-feat strong { color: var(--paper); }
+
+/* ── ENGINEERED FEATURES TABLE ───────────────────────── */
+.eng-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.eng-table th {
+  text-align: left;
+  padding: 10px 16px;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(244,241,235,0.4);
+  border-bottom: 1px solid var(--night-rim);
+}
+
+.eng-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(0,64,112,0.3);
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+.eng-table tr:hover td { background: rgba(0,200,224,0.04); }
+
+.eng-num {
+  color: var(--sat-cyan);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.eng-name {
+  color: #fff;
+  font-family: var(--serif);
+  font-style: italic;
+}
+
+.eng-formula {
+  color: rgba(244,241,235,0.5);
+  font-size: 11px;
+}
+
+.eng-rationale {
+  color: rgba(244,241,235,0.6);
+  font-size: 11px;
+}
+
+.eng-domain {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+
+/* ── RESULTS CARDS ────────────────────────────────────── */
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.result-card {
+  background: var(--night-mid);
+  border: 1px solid var(--night-rim);
+  border-radius: 10px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.result-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px;
+}
+
+.result-card.blue::before { background: linear-gradient(90deg, var(--sat-blue), var(--sat-cyan)); }
+.result-card.green::before { background: linear-gradient(90deg, var(--sat-green), #8dffc8); }
+.result-card.amber::before { background: linear-gradient(90deg, var(--sat-amber), #ffd080); }
+.result-card.red::before { background: linear-gradient(90deg, var(--sat-red), #ff8080); }
+.result-card.violet::before { background: linear-gradient(90deg, var(--sat-violet), #b09ee8); }
+
+.result-headline {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(244,241,235,0.4);
+  margin-bottom: 12px;
+}
+
+.result-big {
+  font-family: var(--serif);
+  font-size: 36px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.result-big sup {
+  font-size: 16px;
+  font-weight: 300;
+  color: rgba(244,241,235,0.5);
+}
+
+.result-desc {
+  font-size: 12px;
+  color: rgba(244,241,235,0.55);
+  line-height: 1.6;
+}
+
+/* Nighttime section highlight */
+.night-highlight {
+  background: linear-gradient(135deg, rgba(0,22,40,0.8), rgba(0,42,74,0.6));
+  border: 1px solid rgba(0,200,224,0.25);
+  border-radius: 12px;
+  padding: 32px;
+  margin: 32px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.night-highlight::before {
+  content: '🌙';
+  position: absolute;
+  right: 32px; top: 24px;
+  font-size: 48px;
+  opacity: 0.15;
+}
+
+.night-vs {
+  display: flex;
+  gap: 0;
+  align-items: stretch;
+  margin-top: 20px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.vs-side {
+  flex: 1;
+  padding: 20px 24px;
+}
+
+.vs-night { background: rgba(0,100,160,0.3); }
+.vs-day { background: rgba(200,100,0,0.15); }
+
+.vs-label {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.vs-night .vs-label { color: var(--sat-cyan); }
+.vs-day .vs-label { color: var(--sat-amber); }
+
+.vs-val {
+  font-family: var(--serif);
+  font-size: 32px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.vs-unit {
+  font-size: 12px;
+  color: rgba(244,241,235,0.5);
+  margin-top: 2px;
+}
+
+.vs-divider {
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 16px;
+  background: var(--night-mid);
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--sat-cyan);
+  min-width: 64px;
+}
+
+/* SHAP bars */
+.shap-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.shap-row {
+  display: grid;
+  grid-template-columns: 220px 1fr 60px;
+  align-items: center;
+  gap: 12px;
+}
+
+.shap-name {
+  font-size: 11px;
+  color: rgba(244,241,235,0.75);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shap-name strong { color: #fff; }
+
+.shap-bar-wrap {
+  height: 10px;
+  background: var(--night-rim);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.shap-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+}
+
+.shap-val {
+  font-size: 11px;
+  color: rgba(244,241,235,0.5);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.shap-rank {
+  font-size: 9px;
+  color: rgba(244,241,235,0.3);
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Threshold pill */
+.threshold {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(45,206,110,0.1);
+  border: 1px solid rgba(45,206,110,0.3);
+  border-radius: 6px;
+  padding: 10px 16px;
+  margin: 6px 4px 6px 0;
+}
+
+.threshold-val {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--sat-green);
+}
+
+.threshold-desc {
+  font-size: 11px;
+  color: rgba(244,241,235,0.6);
+  line-height: 1.4;
+}
+
+/* ── FOOTER / SUMMARY ─────────────────────────────────── */
+.summary-box {
+  background: var(--night-mid);
+  border: 1px solid var(--night-rim);
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 800px;
+}
+
+.summary-box p {
+  color: rgba(244,241,235,0.65);
+  font-size: 13px;
+  line-height: 1.9;
+  margin-bottom: 12px;
+}
+
+.summary-box p:last-child { margin-bottom: 0; }
+.summary-box strong { color: var(--paper); }
+.summary-box em { color: var(--sat-cyan); font-style: normal; }
+
+/* ── RESPONSIVE ───────────────────────────────────────── */
+@media (max-width: 640px) {
+  .hero, .section { padding: 40px 20px; }
+  .tabs { padding: 0 20px; overflow-x: auto; }
+  .shap-row { grid-template-columns: 150px 1fr 50px; }
+  .vs-val { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-badge">
+    <span></span> Remote Sensing · Environmental Health · 2024
+  </div>
+  <h1>Satellites Can <em>Predict</em><br>How Long You'll Live</h1>
+  <p class="hero-sub">
+    Multimodal fusion of 11 satellite and agricultural data streams predicts US county-level life expectancy — no census data, no surveys — from features observable from orbit.
+  </p>
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-val">0.604<span>±0.026</span></div>
+      <div class="stat-lbl">R² · 5-fold grouped CV</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">1.12 <span>yr</span></div>
+      <div class="stat-lbl">Mean absolute error</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">4.2<span>×</span></div>
+      <div class="stat-lbl">Nighttime vs daytime dominance</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">3,108</div>
+      <div class="stat-lbl">CONUS counties · 2000–2019</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">435</div>
+      <div class="stat-lbl">Features across 11 modalities</div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('pipeline')">📡 Pipeline</div>
+  <div class="tab" onclick="switchTab('data')">🗂 Data Streams</div>
+  <div class="tab" onclick="switchTab('features')">⚗️ Engineered Features</div>
+  <div class="tab" onclick="switchTab('results')">📊 Key Results</div>
+  <div class="tab" onclick="switchTab('thresholds')">🎯 Policy Thresholds</div>
+  <div class="tab" onclick="switchTab('summary')">✦ Summary</div>
+</div>
+
+<!-- ═══════════════════════════════ PIPELINE ═══════ -->
+<div id="sec-pipeline" class="section active">
+  <div class="section-title">Methodology</div>
+  <div class="section-h2">Five-Stage Analysis Pipeline</div>
+
+  <div class="pipeline">
+
+    <div class="pipeline-step s1">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-label">Satellite Data Acquisition</div>
+        <div class="step-desc">
+          All environmental features extracted via Google Earth Engine Python API from 11 globally available, continuously updated satellite and agricultural data streams. Spatial aggregation to 3,108 CONUS county boundaries using <code>ee.Image.reduceRegions()</code> at 250m scale. FAO livestock densities linearly interpolated between available snapshots (2005/2010/2015).
+        </div>
+        <div class="step-tags">
+          <span class="tag tag-blue">Google Earth Engine</span>
+          <span class="tag tag-blue">MODIS · Sentinel · Landsat</span>
+          <span class="tag tag-blue">FAO GLW3</span>
+          <span class="tag tag-blue">250m aggregation</span>
+          <span class="tag tag-blue">2000–2019</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="pipeline-step s2">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-label">Feature Engineering & Quality Control</div>
+        <div class="step-desc">
+          416 base features from raw modalities joined with 19 derived cross-modal features (thermal–vegetation interactions, agricultural diversity indices, soil hydrological flags) to yield 435 total. Temporal drift validated with Mann-Kendall tests (NDVI τ=0.05 p=0.62; LST τ=0.08 p=0.43). Winsorization at 1st/99th percentiles; median imputation for cloud-contaminated pixels (&lt;0.3% of observations).
+        </div>
+        <div class="step-tags">
+          <span class="tag tag-cyan">435 total features</span>
+          <span class="tag tag-cyan">19 derived cross-modal</span>
+          <span class="tag tag-cyan">Mann-Kendall drift test</span>
+          <span class="tag tag-cyan">Winsorization</span>
+          <span class="tag tag-cyan">Gap-fill &lt;50% missing</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="pipeline-step s3">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-label">Ablation: Single-Modality Benchmarking</div>
+        <div class="step-desc">
+          10 separate Random Forest models trained — one per data stream — using modality-optimised hyperparameters from 50-iteration RandomizedSearchCV. County-grouped 5-fold CV ensures all 20 years of any given county appear exclusively in either training or test. Establishes performance ceiling for individual sensors and proves genuine complementarity before fusion.
+        </div>
+        <div class="step-tags">
+          <span class="tag tag-green">10 single-modality models</span>
+          <span class="tag tag-green">GroupKFold CV</span>
+          <span class="tag tag-green">RandomizedSearchCV 50 itr</span>
+          <span class="tag tag-green">No spatial leakage</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="pipeline-step s4">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <div class="step-label">Full Fusion Model Training</div>
+        <div class="step-desc">
+          Random Forest trained on all 435 features (n_estimators=2,000; max_depth=40; max_features=0.3; max_samples=0.9). Same county-grouped 5-fold CV. Multimodal fusion reduces unexplained variance by 31% relative to best single-modality model — the synergistic gain that confirms true information complementarity across sensors.
+        </div>
+        <div class="step-tags">
+          <span class="tag tag-amber">R² = 0.604 ± 0.026</span>
+          <span class="tag tag-amber">MAE = 1.12 ± 0.02 yr</span>
+          <span class="tag tag-amber">31% fusion gain</span>
+          <span class="tag tag-amber">Moran's I = 0.08 (p=0.23)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="pipeline-step s5">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <div class="step-label">TreeSHAP Mechanistic Interpretation</div>
+        <div class="step-desc">
+          TreeSHAP (interventional, marginal background n=100) computed on stratified sample of 5,000 county-year observations. Parallelised across 5 batches with joblib — 12+ hours total. LOWESS + Savitzky-Golay smoothing applied to SHAP dependence curves; numerical differentiation identifies benefit-to-harm inflection points. SHAP interaction values computed for top-20 feature pairs to quantify synergistic effects (forest cover × LST).
+        </div>
+        <div class="step-tags">
+          <span class="tag tag-violet">TreeSHAP interventional</span>
+          <span class="tag tag-violet">n=5,000 sample</span>
+          <span class="tag tag-violet">12hr parallel</span>
+          <span class="tag tag-violet">LOWESS threshold detection</span>
+          <span class="tag tag-violet">Spearman ρ=0.89 vs RF native</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ DATA STREAMS ═══ -->
+<div id="sec-data" class="section">
+  <div class="section-title">Input Data</div>
+  <div class="section-h2">11 Satellite & Agricultural Data Streams</div>
+
+  <div class="streams-grid">
+
+    <div class="stream-card">
+      <span class="stream-icon">🌡️</span>
+      <div class="stream-name">MODIS LST</div>
+      <div class="stream-product">MOD11A2 v6.1 · 1km · 8-day</div>
+      <div class="stream-bar-wrap"><div class="stream-bar" style="width:100%;background:linear-gradient(90deg,#0d6ebd,#00c8e0)"></div></div>
+      <div class="stream-feat"><strong>14 features</strong> · Day & night channels · 10th–90th pct · Mean · SD</div>
+    </div>
+
+    <div class="stream-card">
+      <span class="stream-icon">🌿</span>
+      <div class="stream-name">MODIS Vegetation</div>
+      <div class="stream-product">MOD13A1 v6.1 · 500m · 16-day</div>
+      <div class="stream-bar-wrap"><div class="stream-bar" style="width:100%;background:linear-gradient(90deg,#1a7a1a,#2dce6e)"></div></div>
+      <div class="stream-feat"><strong>14 features</strong> · NDVI & EVI · 5 percentiles · Mean · SD</div>
+    </div>
+
+    <div class="stream-card">
+      <span class="stream-icon">🌾</span>
+      <div class="stream-name">USDA Cropland</div>
+      <div class="stream-product">CDL NASS · 30m · Annual</div>
+      <div class="stream-bar-wrap"><div class="stream-bar" style="width:100%;background:linear-gradient(90deg,#8a6000,#f5a623)"></div></div>
+      <div class="stream-feat"><strong>135 features</strong> · 30+ crop types · Forest classes · Development intensity levels</div>
+    </div>
+
+    <div class="stream-card">
+      <span class="stream-icon">🛰️</span>
+      <div class="stream-name">Landsat</div>
+      <div class="stream-product">Collection 2 Tier 1 · 30m · L5/7/8</div>
+      <div class="stream-bar-wrap"><div class="stream-bar" style="width:100%;background:linear-gradient(90deg,#5500aa,#b09ee8)"></div></div>
+      <div class="stream-feat"><strong>84 features</strong> · 6 bands · NDVI/EVI/NDMI/NDWI/SAVI/BSI · 7 statistics</div>
+    </div>
+
+    <div class="stream-card">
+      <span class="stream-icon">📡</span>
+      <div class="stream-name">Sentinel-1 SAR</div>
+      <div class="stream-product">GRD IW · 10m · VH/VV</div>
+      <div class="stream-bar-wrap"><div class="stream-bar" style="width:68%;background:linear-gradient(90deg,#005577,#00c8e0)"></div></div>
+      <div class="stream-feat"><strong>42 features</strong> · VH/VV backscatter · GLCM textures (ASM, Contrast, Correlation, Entropy)</div>
+    </div>
+
+    <div class="stream-card">
+      <span class="stream-icon">🔭</span>
+      <div class="stream-name">Sentinel-2</div>
+      <div class="stream-product">Level-2A · 10–20m · MSI</div>
+      <div class="stream-bar-wrap"><div class="stream-bar" style="width:68%;background:linear-gradient(90deg,#5500aa,#b09ee8)"></div></div>
+      <div class="stream-feat"><strong>84 features</strong> · 6 bands · 6 spectral indices · 7 statistics each</div>
+    </div>
+
+    <div class="stream-card">
+      <span class="stream-icon">💧</span>
+      <div class="stream-name">JRC Surface Water</div>
+      <div class="stream-product">GSW v1.4 · 30m · Annual</div>
+      <div class="stream-bar-wrap"><div class="stream-bar" style="width:24%;background:linear-gradient(90deg,#003366,#0d6ebd)"></div></div>
+      <div class="stream-feat"><strong>6 features</strong> · Permanent & seasonal water coverage · Water-free area %</div>
+    </div>
+
+    <div class="stream-card">
+      <span class="stream-icon">⛰️</span>
+      <div class="stream-name">Copernicus DEM</div>
+      <div class="stream-product">GLO-30 · 30m · Static</div>
+      <div class="stream-bar-wrap"><div class="stream-bar" style="width:24%;background:linear-gradient(90deg,#664400,#f5a623)"></div></div>
+      <div class="stream-feat"><strong>7 features</strong> · Mean elevation · SD (ruggedness) · 5 elevation percentiles</div>
+    </div>
+
+    <div class="stream-card">
+      <span class="stream-icon">🌱</span>
+      <div class="stream-name">ESA CCI Soil Moisture</div>
+      <div class="stream-product">Combined v6.1 · 0.25° · Daily→Annual</div>
+      <div class="stream-bar-wrap"><div class="stream-bar" style="width:24%;background:linear-gradient(90deg,#1a7a1a,#2dce6e)"></div></div>
+      <div class="stream-feat"><strong>7 features</strong> · Volumetric index × 100 · Mean · SD · 5 percentiles</div>
+    </div>
+
+    <div class="stream-card">
+      <span class="stream-icon">🐄</span>
+      <div class="stream-name">FAO Livestock</div>
+      <div class="stream-product">GLW3 · 10km · 2005/10/15</div>
+      <div class="stream-bar-wrap"><div class="stream-bar" style="width:40%;background:linear-gradient(90deg,#882200,#e84040)"></div></div>
+      <div class="stream-feat"><strong>23 features</strong> · 8 species (cattle, pig, chicken, goat, sheep, horse, duck, buffalo) · Density · Count · SD · SE</div>
+    </div>
+
+    <div class="stream-card" style="border-color:rgba(0,200,224,0.4);background:rgba(0,200,224,0.05)">
+      <span class="stream-icon">⚗️</span>
+      <div class="stream-name">Derived Cross-Modal</div>
+      <div class="stream-product">Engineered during fusion preprocessing</div>
+      <div class="stream-bar-wrap"><div class="stream-bar" style="width:24%;background:linear-gradient(90deg,#008899,#00c8e0)"></div></div>
+      <div class="stream-feat"><strong>19 features</strong> · Thermal-vegetation interactions · Hydrological indices · Agricultural diversity · See Features tab →</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ ENGINEERED FEATURES ═ -->
+<div id="sec-features" class="section">
+  <div class="section-title">Feature Engineering</div>
+  <div class="section-h2">19 Derived Cross-Modal Features</div>
+  <p style="color:rgba(244,241,235,0.55);font-size:12px;margin-bottom:28px;max-width:680px">
+    Computed during combined-model preprocessing only. Not used in single-modality ablation models. These features capture synergistic interactions between sensors that no individual stream can encode alone. Together with 416 base features they yield the 435-feature fusion dataset.
+  </p>
+
+  <div style="overflow-x:auto">
+  <table class="eng-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Feature Name</th>
+        <th>Construction</th>
+        <th>Mechanistic Rationale</th>
+        <th>Domain</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="eng-num">01</td>
+        <td class="eng-name">Thermal Vegetation Index</td>
+        <td class="eng-formula">Nighttime LST<sub>mean</sub> × (1 − NDVI<sub>mean</sub>)</td>
+        <td class="eng-rationale">Heat burden in bare/low-vegetation areas; combines thermal stress with cooling deficit</td>
+        <td><span class="eng-domain tag tag-cyan">Thermal×Veg</span></td>
+      </tr>
+      <tr>
+        <td class="eng-num">02</td>
+        <td class="eng-name">Diurnal Temperature Range</td>
+        <td class="eng-formula">Daytime LST<sub>mean</sub> − Nighttime LST<sub>mean</sub></td>
+        <td class="eng-rationale">Proxy for continentality, radiative cooling capacity, and urban heat island intensity</td>
+        <td><span class="eng-domain tag tag-cyan">Thermal</span></td>
+      </tr>
+      <tr>
+        <td class="eng-num">03</td>
+        <td class="eng-name">Nighttime Cooling Efficiency</td>
+        <td class="eng-formula">(Day LST<sub>p90</sub> − Night LST<sub>p10</sub>) / Day LST<sub>p90</sub></td>
+        <td class="eng-rationale">Fraction of peak daytime heat shed overnight; counties with low values are thermally trapped</td>
+        <td><span class="eng-domain tag tag-cyan">Thermal</span></td>
+      </tr>
+      <tr>
+        <td class="eng-num">04</td>
+        <td class="eng-name">NDVI–LST Divergence</td>
+        <td class="eng-formula">NDVI<sub>std</sub> / (Day LST<sub>std</sub> + ε)</td>
+        <td class="eng-rationale">Landscape heterogeneity; high values = green-cool patches in warm matrix</td>
+        <td><span class="eng-domain tag tag-cyan">Thermal×Veg</span></td>
+      </tr>
+      <tr>
+        <td class="eng-num">05</td>
+        <td class="eng-name">Agricultural Greenness Ratio</td>
+        <td class="eng-formula">NDVI<sub>mean</sub> / (Corn% + Soybean% + 0.01)</td>
+        <td class="eng-rationale">Vegetation quality beyond monoculture; separates diverse green cover from crop-driven NDVI</td>
+        <td><span class="eng-domain tag tag-green">Veg×Agri</span></td>
+      </tr>
+      <tr>
+        <td class="eng-num">06</td>
+        <td class="eng-name">Livestock Heat Exposure</td>
+        <td class="eng-formula">Cattle density × Night LST<sub>mean</sub></td>
+        <td class="eng-rationale">Combined animal density under thermal stress; encodes ammonia/pathogen concentration risk in hot counties</td>
+        <td><span class="eng-domain tag tag-amber">Livestock×Thermal</span></td>
+      </tr>
+      <tr>
+        <td class="eng-num">07</td>
+        <td class="eng-name">Impervious Surface Heat Index</td>
+        <td class="eng-formula">(Med + High Dev%) × Night LST<sub>mean</sub></td>
+        <td class="eng-rationale">Development thermal penalty; isolates urban heat island effect in densely built areas</td>
+        <td><span class="eng-domain tag tag-cyan">Dev×Thermal</span></td>
+      </tr>
+      <tr>
+        <td class="eng-num">08</td>
+        <td class="eng-name">Forest Heat Buffer Score</td>
+        <td class="eng-formula">Deciduous Forest% × max(0, Day LST<sub>mean</sub> − 20)</td>
+        <td class="eng-rationale">Buffering activation above 20°C threshold; zero in cool counties, strong in hot forested counties</td>
+        <td><span class="eng-domain tag tag-green">Forest×Thermal</span></td>
+      </tr>
+      <tr>
+        <td class="eng-num">09</td>
+        <td class="eng-name">Soil Moisture Deficit</td>
+        <td class="eng-formula">max(0, 6.0 − SM<sub>mean</sub>)</td>
+        <td class="eng-rationale">Distance below optimal field capacity; drought agricultural stress signal</td>
+        <td><span class="eng-domain tag tag-green">Soil</span></td>
+      </tr>
+      <tr>
+        <td class="eng-num">10</td>
+        <td class="eng-name">Soil Moisture Excess</td>
+        <td class="eng-formula">max(0, SM<sub>mean</sub> − 8.5)</td>
+        <td class="eng-rationale">Distance above waterlogging threshold; flood risk and anaerobic conditions signal</td>
+        <td><span class="eng-domain tag tag-green">Soil</span></td>
+      </tr>
+      <tr>
+        <td class="eng-num">11</td>
+        <td class="eng-name">Wetland Flood Risk Index</td>
+        <td class="eng-formula">(Woody + Herbaceous Wetlands%) × SM<sub>mean</sub></td>
+        <td class="eng-rationale">Combined inundation vulnerability; high values predict waterborne disease and flood health burden</td>
+        <td><span class="eng-domain tag tag-green">Soil×Landcover</span></td>
+      </tr>
+      <tr>
+        <td class="eng-num">12</td>
+        <td class="eng-name">SAR–NDVI Structural Consistency</td>
+        <td class="eng-formula">Pearson r(SAR VH, NDVI) across years</td>
+        <td class="eng-rationale">Vegetation structure stability; disagreement flags transitional or degraded land cover</td>
+        <td><span class="eng-domain tag tag-violet">SAR×Veg</span></td>
+      </tr>
+      <tr>
+        <td class="eng-num">13</td>
+        <td class="eng-name">Water Permanence Index</td>
+        <td class="eng-formula">Permanent Water% / (Perm + Seasonal + ε)</td>
+        <td class="eng-rationale">Hydrological reliability; low values flag flood-pulse systems with irregular water access</td>
+        <td><span class="eng-domain tag tag-blue">Hydro</span></td>
+      </tr>
+      <tr>
+        <td class="eng-num">14</td>
+        <td class="eng-name">Elevation Thermal Modifier</td>
+        <td class="eng-formula">Night LST<sub>mean</sub> − (DEM<sub>mean</sub> × 0.0065)</td>
+        <td class="eng-rationale">LST adjusted for adiabatic lapse rate (6.5°C/km); removes elevation-driven LST variance</td>
+        <td><span class="eng-domain tag tag-amber">Elev×Thermal</span></td>
+      </tr>
+      <tr>
+        <td class="eng-num">15</td>
+        <td class="eng-name">Topographic Roughness × LST</td>
+        <td class="eng-formula">DEM<sub>std</sub> × Day LST<sub>std</sub></td>
+        <td class="eng-rationale">Thermal complexity in rugged terrain; high values signal heterogeneous microclimates</td>
+        <td><span class="eng-domain tag tag-amber">Elev×Thermal</span></td>
+      </tr>
+      <tr>
+        <td class="eng-num">16</td>
+        <td class="eng-name">Livestock Species Diversity</td>
+        <td class="eng-formula">Shannon H across 8 FAO species densities</td>
+        <td class="eng-rationale">Mono- vs poly-species farming; low values identify specialised CAFO-dominated counties</td>
+        <td><span class="eng-domain tag tag-amber">Livestock</span></td>
+      </tr>
+      <tr>
+        <td class="eng-num">17</td>
+        <td class="eng-name">Crop Diversity Index</td>
+        <td class="eng-formula">Shannon H across 30+ CDL crop types</td>
+        <td class="eng-rationale">Monoculture vs rotation intensity; higher diversity correlates with economic resilience and reduced pesticide burden</td>
+        <td><span class="eng-domain tag tag-amber">Agri</span></td>
+      </tr>
+      <tr>
+        <td class="eng-num">18</td>
+        <td class="eng-name">Seasonal NDVI Amplitude</td>
+        <td class="eng-formula">NDVI<sub>p90</sub> − NDVI<sub>p10</sub></td>
+        <td class="eng-rationale">Growing season strength; high values confirm productive agriculture; near-zero values indicate evergreen or sparse cover</td>
+        <td><span class="eng-domain tag tag-green">Veg</span></td>
+      </tr>
+      <tr>
+        <td class="eng-num">19</td>
+        <td class="eng-name">Cross-Sensor NDVI Consistency</td>
+        <td class="eng-formula">|MODIS NDVI<sub>mean</sub> − Landsat NDVI<sub>mean</sub>|</td>
+        <td class="eng-rationale">Sensor cross-validation flag; large disagreement indicates cloud contamination, fire, or rapid land cover change</td>
+        <td><span class="eng-domain tag tag-violet">QA×Veg</span></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p style="margin-top:20px;color:rgba(244,241,235,0.35);font-size:11px;">
+    416 base features (raw modalities) + 19 derived = <strong style="color:rgba(244,241,235,0.7)">435 total</strong>. 
+    All derived features computed in <code style="color:var(--sat-cyan)">data_prep/feature_engineering.py</code> before combined-model training.
+  </p>
+</div>
+
+<!-- ═══════════════════════════════ RESULTS ═══════════ -->
+<div id="sec-results" class="section">
+  <div class="section-title">Results</div>
+  <div class="section-h2">Key Findings Across Model & SHAP Analysis</div>
+
+  <div class="results-grid">
+    <div class="result-card blue">
+      <div class="result-headline">Explained Variance · Pooled CV</div>
+      <div class="result-big">0.604 <sup>± 0.026</sup></div>
+      <div class="result-desc">R² on geographically held-out counties — 75% of IHME census-model performance, using zero census inputs.</div>
+    </div>
+    <div class="result-card green">
+      <div class="result-headline">Mean Absolute Error</div>
+      <div class="result-big">1.12 <sup>yr</sup></div>
+      <div class="result-desc">59% of counties within ±1 year; 87% within ±2 years. Best-predicted MAE: 0.12 years (Runnels, TX).</div>
+    </div>
+    <div class="result-card amber">
+      <div class="result-headline">Multimodal Fusion Gain</div>
+      <div class="result-big">31<sup>%</sup></div>
+      <div class="result-desc">Reduction in unexplained variance vs best single modality (LST: R²=0.426). Synergistic, not additive.</div>
+    </div>
+    <div class="result-card violet">
+      <div class="result-headline">Spatial Autocorrelation in Errors</div>
+      <div class="result-big">0.08</div>
+      <div class="result-desc">Moran's I (p=0.23). Confirming genuine geographic generalisation — not spatial memorisation.</div>
+    </div>
+    <div class="result-card blue">
+      <div class="result-headline">Temporal Stability · 20 Years</div>
+      <div class="result-big">p=0.27</div>
+      <div class="result-desc">R² trend β=+0.0006/yr across 2000–2019. No sensor drift, no model degradation detected.</div>
+    </div>
+    <div class="result-card red">
+      <div class="result-headline">Hardest Counties</div>
+      <div class="result-big">7.3 <sup>yr MAE</sup></div>
+      <div class="result-desc">26 Indigenous reservation counties — structural inequities from historical trauma beyond satellite observation.</div>
+    </div>
+  </div>
+
+  <!-- NIGHTTIME PARADOX -->
+  <div class="night-highlight">
+    <div class="section-title" style="margin-bottom:6px">The Nighttime Thermal Paradox</div>
+    <p style="color:rgba(244,241,235,0.6);font-size:12px;max-width:600px;margin-bottom:4px">
+      The single most unexpected finding: minimum overnight cooling opportunity — not extreme daytime heat — is the dominant predictor of county-level longevity.
+    </p>
+    <div class="night-vs">
+      <div class="vs-side vs-night">
+        <div class="vs-label">🌙 Nighttime LST (all 7 features)</div>
+        <div class="vs-val">1.071</div>
+        <div class="vs-unit">cumulative mean |SHAP| · years</div>
+      </div>
+      <div class="vs-divider">4.2×</div>
+      <div class="vs-side vs-day">
+        <div class="vs-label">☀️ Daytime LST (all 7 features)</div>
+        <div class="vs-val">0.255</div>
+        <div class="vs-unit">cumulative mean |SHAP| · years</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHAP BARS -->
+  <div style="margin-top:40px">
+    <div class="section-title" style="margin-bottom:16px">SHAP Feature Hierarchy · Top 10</div>
+    <div class="shap-list" id="shapList"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ THRESHOLDS ════════ -->
+<div id="sec-thresholds" class="section">
+  <div class="section-title">Policy Implications</div>
+  <div class="section-h2">Four Satellite-Observable Policy Thresholds</div>
+  <p style="color:rgba(244,241,235,0.55);font-size:12px;margin-bottom:32px;max-width:640px">
+    SHAP derivative analysis identifies sharp inflection points where the direction or rate of health impact changes qualitatively. Each is directly measurable from existing satellite archives — no new data collection required.
+  </p>
+
+  <div style="display:flex;flex-direction:column;gap:24px;max-width:760px">
+
+    <div style="background:var(--night-mid);border:1px solid var(--night-rim);border-radius:10px;padding:24px;border-left:4px solid var(--sat-cyan)">
+      <div style="display:flex;align-items:flex-start;gap:16px">
+        <div style="font-size:28px">🌡️</div>
+        <div>
+          <div class="threshold-val" style="font-size:28px">≈ 9.2°C</div>
+          <div style="font-family:var(--serif);font-size:16px;font-weight:600;color:#fff;margin:4px 0">Nighttime LST Benefit-to-Harm Threshold</div>
+          <div style="color:rgba(244,241,235,0.6);font-size:12px;line-height:1.7">Counties where nighttime LST 10th percentile exceeds this value are denied the overnight cooling window essential for cardiovascular and immune recovery. Directly detectable from MODIS MOD11A2 8-day composites. <strong style="color:var(--paper)">Application:</strong> Heat mitigation priority; residential cooling assistance; urban tree canopy targeting.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:var(--night-mid);border:1px solid var(--night-rim);border-radius:10px;padding:24px;border-left:4px solid var(--sat-amber)">
+      <div style="display:flex;align-items:flex-start;gap:16px">
+        <div style="font-size:28px">🌾</div>
+        <div>
+          <div class="threshold-val" style="font-size:28px;color:var(--sat-amber)">≈ 4%</div>
+          <div style="font-family:var(--serif);font-size:16px;font-weight:600;color:#fff;margin:4px 0">Corn Coverage — Agricultural Benefit Saturation</div>
+          <div style="color:rgba(244,241,235,0.6);font-size:12px;line-height:1.7">Below 4% county coverage, increasing corn agriculture correlates with modest LE benefits (rural economic vitality). Above 4%, SHAP values plateau — extreme monoculture intensification adds no incremental population health advantage. <strong style="color:var(--paper)">Application:</strong> Agricultural diversification policy; diminishing returns modelling.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:var(--night-mid);border:1px solid var(--night-rim);border-radius:10px;padding:24px;border-left:4px solid var(--sat-red)">
+      <div style="display:flex;align-items:flex-start;gap:16px">
+        <div style="font-size:28px">🐄</div>
+        <div>
+          <div class="threshold-val" style="font-size:28px;color:var(--sat-red)">≈ 473 head/km²</div>
+          <div style="font-family:var(--serif);font-size:16px;font-weight:600;color:#fff;margin:4px 0">Cattle Density — CAFO Oversight Inflection</div>
+          <div style="color:rgba(244,241,235,0.6);font-size:12px;line-height:1.7">Negative health associations exist even at moderate densities. A qualitative transition in the exposure-response relationship occurs at this inflection. Current EPA threshold (1,000 animal units) is higher; empirical health data suggests earlier regulatory attention is warranted. <strong style="color:var(--paper)">Application:</strong> Tiered CAFO oversight; satellite-based density monitoring.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:var(--night-mid);border:1px solid var(--night-rim);border-radius:10px;padding:24px;border-left:4px solid var(--sat-green)">
+      <div style="display:flex;align-items:flex-start;gap:16px">
+        <div style="font-size:28px">🌲</div>
+        <div>
+          <div class="threshold-val" style="font-size:28px">54% attenuation</div>
+          <div style="font-family:var(--serif);font-size:16px;font-weight:600;color:#fff;margin:4px 0">Forest Cover &gt;20% — Heat Penalty Buffer</div>
+          <div style="color:rgba(244,241,235,0.6);font-size:12px;line-height:1.7">Deciduous forest cover above 20% attenuates the heat-driven LE penalty by ≈54% in the hottest temperature quartile. Dose-dependent: negligible below 20°C, substantial above 25°C. Zero effect in cool counties — the buffering only activates under thermal stress. <strong style="color:var(--paper)">Application:</strong> Forest conservation cost-benefit; nature-based climate adaptation.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SUMMARY ═══════════ -->
+<div id="sec-summary" class="section">
+  <div class="section-title">Final Summary</div>
+  <div class="section-h2">What This Work Establishes</div>
+
+  <div class="summary-box">
+    <p>
+      This study demonstrates that <strong>satellite Earth observation alone — with zero census inputs — can predict life expectancy at birth for every US county</strong> with R²=0.604 and MAE=1.12 years. Operating on 62,160 county-year observations from 2000–2019, the multimodal Random Forest model achieves <em>75% of the performance</em> of IHME's gold-standard sociodemographic model, which relies on income, education, smoking prevalence, and healthcare data that most of the world cannot provide.
+    </p>
+    <p>
+      The most important scientific finding is the <strong>nighttime thermal paradox</strong>: chronic minimum overnight temperature — not extreme daytime heat — is the dominant predictor of county-level longevity, carrying 4.2× the cumulative SHAP importance of all daytime thermal features combined. A benefit-to-harm threshold at ≈9.2°C nighttime LST identifies counties denied the overnight cooling essential for sleep, cardiovascular recovery, and immune restoration. This reorients the heat-health literature from an almost exclusive focus on peak daytime temperatures and heat waves toward <em>chronic nocturnal burden</em> — a shift with direct implications for how heat action plans are designed.
+    </p>
+    <p>
+      <strong>Three further mechanistic findings</strong> are policy-actionable via satellite: corn agriculture benefits saturate at ≈4% coverage; cattle density inflects negatively at ≈473 head/km²; and deciduous forest cover above 20% buffers the heat-driven LE penalty by 54% in the hottest counties — a quantified ecosystem service value currently absent from most nature-based adaptation cost-benefit analyses.
+    </p>
+    <p>
+      The <strong>19 derived cross-modal features</strong> engineered for the fusion model — including the Thermal Vegetation Index, Nighttime Cooling Efficiency, Forest Heat Buffer Score, and Livestock Species Diversity — represent a reusable library of satellite-computable health signal proxies that can be computed from freely available global data streams. Combined with county-grouped cross-validation that prevents spatial leakage, and TreeSHAP analysis that identifies specific thresholds rather than opaque rankings, this methodology provides a <em>transferable template</em> for satellite-based health surveillance in data-scarce regions globally.
+    </p>
+    <p style="color:rgba(244,241,235,0.35);font-size:11px;margin-top:8px">
+      All satellite data streams are globally available and continuously updated. All code and processed data are archived at Zenodo and GitHub.
+    </p>
+  </div>
+</div>
+
+<script>
+// Tab switching
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('sec-' + id).classList.add('active');
+  if (id === 'results') setTimeout(renderShap, 100);
+}
+
+// SHAP bar chart
+const shapData = [
+  { rank: 1,  name: 'Nighttime LST · 10th pct',      val: 0.297, color: '#00c8e0', night: true },
+  { rank: 2,  name: 'Nighttime LST · 25th pct',      val: 0.257, color: '#00b8cc', night: true },
+  { rank: 3,  name: 'Nighttime LST · Mean',           val: 0.172, color: '#00a0b5', night: true },
+  { rank: 4,  name: 'Nighttime LST · Median',         val: 0.143, color: '#0090a0', night: true },
+  { rank: 5,  name: 'Developed (Med Intensity) %',    val: 0.128, color: '#2dce6e', night: false },
+  { rank: 6,  name: 'Nighttime LST · 75th pct',      val: 0.106, color: '#007a8a', night: true },
+  { rank: 7,  name: 'Nighttime LST · 90th pct',      val: 0.076, color: '#006070', night: true },
+  { rank: 8,  name: 'NDVI · 10th pct',               val: 0.072, color: '#5cb85c', night: false },
+  { rank: 9,  name: 'Woody Wetlands %',              val: 0.069, color: '#f5a623', night: false },
+  { rank: 10, name: 'Horse Density',                 val: 0.061, color: '#e84040', night: false },
+];
+
+function renderShap() {
+  const max = shapData[0].val;
+  const container = document.getElementById('shapList');
+  if (container.children.length > 0) return;
+  shapData.forEach((d, i) => {
+    const row = document.createElement('div');
+    row.className = 'shap-row';
+    row.style.animationDelay = `${i * 0.05}s`;
+    row.innerHTML = `
+      <div class="shap-name" style="display:flex;align-items:center;gap:8px">
+        <span style="color:rgba(244,241,235,0.3);font-size:10px;width:14px">${d.rank}</span>
+        <span style="${d.night ? 'color:#fff' : 'color:rgba(244,241,235,0.7)'}">${d.name}${d.night ? ' <span style="color:var(--sat-cyan);font-size:9px">🌙</span>' : ''}</span>
+      </div>
+      <div class="shap-bar-wrap">
+        <div class="shap-bar-fill" id="bar${i}" style="width:0%;background:${d.color}"></div>
+      </div>
+      <div class="shap-val">${d.val.toFixed(3)} yr</div>
+    `;
+    container.appendChild(row);
+    setTimeout(() => {
+      document.getElementById('bar' + i).style.width = ((d.val / max) * 100) + '%';
+    }, 50 + i * 60);
+  });
+}
+
+// Render SHAP on first load if results tab visible
+renderShap();
+</script>
+
+</body>
+</html>
