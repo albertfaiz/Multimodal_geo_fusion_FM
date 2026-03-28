@@ -7,7 +7,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX)
 [![Paper](https://img.shields.io/badge/Paper-Remote%20Sensing%20(MDPI)-green)](https://doi.org/PAPER_DOI)
 
-> **Key finding:** Nighttime land surface temperature is a 4.2× stronger predictor of county-level longevity than daytime heat — identifying a 9.2°C overnight cooling threshold that separates counties gaining physiological recovery from those accumulating chronic thermal burden.
+> **Key finding:** The nighttime thermal environment is a 3.0× stronger predictor of county-level longevity than daytime heat. The model identifies a 9.2°C overnight cooling threshold that separates counties gaining physiological recovery from those accumulating chronic thermal burden.
 
 ---
 
@@ -19,9 +19,9 @@ This repository contains the complete pipeline to predict **life expectancy at b
 |--------|-------|
 | **Counties** | 3,108 CONUS |
 | **Time span** | 2000–2019 (20 years) |
-| **Features** | 435 across 11 data streams |
-| **R²** | 0.604 ± 0.026 |
-| **MAE** | 1.12 ± 0.02 years |
+| **Features** | 450 across 11 data streams |
+| **R²** | 0.604 ± 0.043 |
+| **MAE** | 1.12 ± 0.05 years |
 | **Fusion gain** | 31% over best single modality |
 | **IHME benchmark** | 75% of census-model performance |
 
@@ -29,7 +29,7 @@ This repository contains the complete pipeline to predict **life expectancy at b
 
 ## 🗂️ Repository Structure
 
-```
+```text
 life-expectancy-remote-sensing/
 │
 ├── 📁 gee/                          # Google Earth Engine extraction scripts
@@ -44,13 +44,13 @@ life-expectancy-remote-sensing/
 │
 ├── 📁 data_prep/                    # Feature engineering & assembly
 │   ├── merge_modalities.py          # Join all data streams by FIPS + year
-│   ├── feature_engineering.py       # 19 derived cross-modal features
+│   ├── feature_engineering.py       # 25 derived cross-modal features
 │   ├── quality_control.py           # Winsorization, imputation, drift tests
 │   └── livestock_interpolation.py   # FAO GLW3 temporal interpolation
 │
 ├── 📁 models/                       # ML training pipelines
 │   ├── train_single_modality.py     # Per-modality ablation models
-│   ├── train_combined.py            # Full 435-feature fusion model
+│   ├── train_combined.py            # Full 450-feature fusion model
 │   ├── hyperparams/                 # Per-modality optimized configs (.json)
 │   └── cross_validation.py          # County-grouped 5-fold CV
 │
@@ -58,7 +58,7 @@ life-expectancy-remote-sensing/
 │   ├── run_shap.py                  # TreeSHAP computation (12hr parallel)
 │   ├── shap_plots.py                # Beeswarm, dependence, waterfall
 │   ├── threshold_detection.py       # LOWESS + derivative inflection points
-│   └── interaction_analysis.py     # Forest×LST synergy quantification
+│   └── interaction_analysis.py      # Forest×LST synergy quantification
 │
 ├── 📁 figures/                      # All publication figures
 │   ├── fig01_spatial_residuals/
@@ -70,9 +70,9 @@ life-expectancy-remote-sensing/
 │   ├── fig06_soil_gradient/
 │   ├── fig07_ablation/
 │   ├── fig08_bracket_waterfall/
-│   ├── figA_nighttime_paradox/      # NEW: nighttime vs daytime comparison
-│   ├── figB_urban_spectrum/         # NEW: development intensity gradient
-│   └── figC_spatial_fidelity/       # NEW: actual vs predicted choropleth
+│   ├── figA_nighttime_paradox/      
+│   ├── figB_urban_spectrum/         
+│   └── figC_spatial_fidelity/       
 │
 ├── 📁 paper/                        # LaTeX manuscript
 │   ├── main.tex
@@ -86,33 +86,39 @@ life-expectancy-remote-sensing/
 
 ---
 
-## 🔬 The 19 Derived Cross-Modal Features
+## 🔬 The 25 Derived Cross-Modal Features
 
-After combining the 416 base features from raw modalities, **19 engineered features** are computed during combined-model preprocessing to capture cross-modal interactions:
+To capture complex environmental interactions, **25 engineered features** are computed dynamically. These achieve an $R^2$ of 0.563 on their own, rivalling single-sensor optical arrays:
 
-| # | Feature | Formula / Description |
-|---|---------|----------------------|
+| # | Feature | Description |
+|---|---------|-------------|
 | 1 | **Thermal Vegetation Index (TVI)** | Nighttime LST mean × (1 − NDVI mean) — heat burden in low-vegetation areas |
-| 2 | **Diurnal Temperature Range** | Daytime LST mean − Nighttime LST mean — proxy for continentality & radiative cooling |
-| 3 | **Nighttime Cooling Efficiency** | (Daytime LST 90th − Nighttime LST 10th) / Daytime LST 90th — fraction of peak heat shed overnight |
-| 4 | **NDVI–LST Divergence** | NDVI std / (Daytime LST std + ε) — landscape thermal heterogeneity |
-| 5 | **Agricultural Greenness Ratio** | NDVI mean / (Corn% + Soybean% + 0.01) — vegetation quality beyond monoculture |
-| 6 | **Livestock Heat Exposure** | Cattle density × Nighttime LST mean — animal density under thermal stress |
-| 7 | **Impervious Surface Heat Index** | (Med + High Intensity Dev%) × Nighttime LST mean — development thermal penalty |
-| 8 | **Forest Heat Buffer Score** | Deciduous Forest% × max(0, Daytime LST mean − 20°C) — buffering activation above 20°C |
-| 9 | **Soil Moisture Deficit** | max(0, 6.0 − Soil Moisture mean) — distance below optimal field capacity |
-| 10 | **Soil Moisture Excess** | max(0, Soil Moisture mean − 8.5) — distance above waterlogging threshold |
-| 11 | **Wetland Flood Risk Index** | (Woody Wetlands% + Herbaceous Wetlands%) × Soil Moisture mean |
-| 12 | **SAR–NDVI Structural Consistency** | Pearson r(SAR VH, NDVI) across years — vegetation structure stability |
-| 13 | **Water Permanence Index** | Permanent Water% / (Permanent + Seasonal Water% + ε) — hydrological reliability |
-| 14 | **Elevation Thermal Modifier** | Nighttime LST mean − (DEM mean × 0.0065) — LST adjusted for adiabatic lapse rate |
-| 15 | **Topographic Roughness × LST** | DEM std × Daytime LST std — thermal complexity in rugged terrain |
-| 16 | **Livestock Species Diversity** | Shannon entropy across 8 FAO species densities — mono- vs poly-species farming |
-| 17 | **Crop Diversity Index** | Shannon entropy across 30+ CDL crop types — monoculture vs rotation intensity |
-| 18 | **Seasonal NDVI Amplitude** | NDVI 90th percentile − NDVI 10th percentile — growing season strength |
-| 19 | **Cross-Sensor NDVI Consistency** | |MODIS NDVI mean − Landsat NDVI mean| — sensor cross-validation flag |
+| 2 | **Diurnal Temp Range** | Daytime LST mean − Nighttime LST mean — proxy for continentality & radiative cooling |
+| 3 | **Nighttime Cooling Efficiency** | Fraction of peak heat shed overnight |
+| 4 | **NDVI–LST Divergence** | Landscape thermal heterogeneity |
+| 5 | **Ag Greenness Ratio** | Vegetation quality beyond monoculture coverage |
+| 6 | **Livestock Heat Exposure** | Cattle density × Nighttime LST mean |
+| 7 | **Impervious Surface Heat Index** | Development intensity thermal penalty |
+| 8 | **Forest Heat Buffer Score** | Buffering activation specifically above 20°C |
+| 9 | **Soil Moisture Deficit** | Distance below optimal field capacity |
+| 10 | **Soil Moisture Excess** | Distance above waterlogging threshold |
+| 11 | **Wetland Flood Risk Index** | Interaction of wetland area and soil moisture |
+| 12 | **SAR–NDVI Structural Index** | Vegetation structure stability via radar-optical synthesis |
+| 13 | **Water Permanence Index** | Hydrological reliability (Permanent vs. Seasonal) |
+| 14 | **Elevation Thermal Mod** | LST adjusted for adiabatic lapse rate |
+| 15 | **Topographic Roughness × LST** | Thermal complexity in rugged terrain |
+| 16 | **Livestock Species Diversity** | Mono- vs poly-species farming |
+| 17 | **Crop Diversity Index** | Monoculture vs rotation intensity |
+| 18 | **Seasonal NDVI Amplitude** | Growing season strength |
+| 19 | **Cross-Sensor NDVI Consistency** | Sensor cross-validation flag |
+| 20 | **Wet Bulb Temperature Proxy** | Synthesis of humidity and thermal conditions |
+| 21 | **Blue-Green Proximity Index** | Spatial relationship of water and vegetation |
+| 22 | **High-Intensity Urban Stressor** | Extreme built-environment density |
+| 23 | **Industrial Ag Proxy** | Scale of monoculture operations |
+| 24 | **Livestock Pollution Load** | Aggregated metabolic waste proxy |
+| 25 | **Landscape Complexity** | Spatial heterogeneity index |
 
-> These features are computed in `data_prep/feature_engineering.py`. They are **not used in single-modality ablation models** — only in the combined fusion model, which is why feature count per modality sums to 416, and 416 + 19 = 435.
+> These features are computed in `data_prep/feature_engineering.py`. They are **not used in single-modality ablation models** — only in the combined fusion model.
 
 ---
 
@@ -121,14 +127,14 @@ After combining the 416 base features from raw modalities, **19 engineered featu
 ### 1. Environment Setup
 ```bash
 conda env create -f environment.yml
-conda activate le-rs
+conda activate geo_ml
 ```
 
 ### 2. Download Processed Features (Zenodo)
 ```bash
-# Download pre-processed county-year feature matrix (~2.1 GB)
-wget https://zenodo.org/record/XXXXXXX/files/county_features_2000_2019.csv.gz
-wget https://zenodo.org/record/XXXXXXX/files/county_life_expectancy_ihme.csv
+# Download pre-processed county-year feature matrix
+wget [https://zenodo.org/record/XXXXXXX/files/county_features_2000_2019.csv.gz](https://zenodo.org/record/XXXXXXX/files/county_features_2000_2019.csv.gz)
+wget [https://zenodo.org/record/XXXXXXX/files/county_life_expectancy_ihme.csv](https://zenodo.org/record/XXXXXXX/files/county_life_expectancy_ihme.csv)
 ```
 
 ### 3. Train the Combined Model
@@ -141,17 +147,11 @@ python models/train_combined.py \
 
 ### 4. Run SHAP Analysis
 ```bash
-# Warning: ~12 hours on 8-core machine
 python shap/run_shap.py \
     --model results/combined_rf_model.pkl \
     --features data/county_features_2000_2019.csv.gz \
     --n_sample 5000 \
     --output results/shap_values.pkl
-```
-
-### 5. Reproduce All Figures
-```bash
-python figures/generate_all.py --shap results/shap_values.pkl
 ```
 
 ---
@@ -169,47 +169,44 @@ python figures/generate_all.py --shap results/shap_values.pkl
 | JRC Surface Water | v1.4 | 30 m, annual | 2000–2019 | 6 |
 | Copernicus DEM | GLO-30 | 30 m, static | — | 7 |
 | ESA CCI Soil Moisture | v6.1 | 0.25°, daily | 2000–2019 | 7 |
-| FAO Livestock | GLW3 | 10 km | 2005/10/15 | 23 |
-| **Derived** | Cross-modal engineering | — | — | **19** |
-| **TOTAL** | | | | **435** |
-
-All extraction scripts target **Google Earth Engine** (free academic access). Pre-extracted county-level matrices are available on Zenodo.
+| FAO Livestock | GLW3 | 10 km | 2005/10/15 | 32 |
+| **Derived** | Cross-modal engineering | — | — | **25** |
+| **TOTAL** | | | | **450** |
 
 ---
 
 ## 🗝️ Key Results
 
 ### The Nighttime Thermal Paradox
-Nighttime LST percentiles (minimum overnight cooling opportunity) outperform all other predictors — including daytime heat, vegetation, and agricultural land use — by a factor of **4.2×** in cumulative SHAP importance.
+Nighttime features heavily dominate the predictive hierarchy, outperforming daytime heat signals by a factor of **3.0×** in cumulative SHAP importance.
 
+```text
+Nighttime LST (all 7 channels):  0.660 years cumulative |SHAP|
+Daytime LST (all 7 channels):    0.218 years cumulative |SHAP|
+                                 ─────────────────────────────
+                                 3.0× nighttime dominance
 ```
-Nighttime LST (all 7 features):  1.071 years cumulative |SHAP|
-Daytime LST  (all 7 features):   0.255 years cumulative |SHAP|
-                                  ─────────────────────────────
-                                  4.2× nighttime dominance
-```
-
-**Policy threshold:** Counties where nighttime LST 10th percentile exceeds **≈9.2°C** are denied the overnight cooling window essential for cardiovascular and immune recovery.
 
 ### SHAP Feature Hierarchy (Top 10)
-| Rank | Feature | |SHAP| (years) | Direction |
-|------|---------|------------|-----------|
-| 1 | Nighttime LST (10th pct) | 0.297 | Negative |
-| 2 | Nighttime LST (25th pct) | 0.257 | Negative |
-| 3 | Nighttime LST (Mean) | 0.172 | Negative |
-| 4 | Nighttime LST (Median) | 0.143 | Negative |
-| 5 | Developed (Med Intensity) % | 0.128 | **Positive** |
-| 6 | Nighttime LST (75th pct) | 0.106 | Negative |
-| 7 | Nighttime LST (90th pct) | 0.076 | Negative |
-| 8 | NDVI (10th pct) | 0.072 | Mixed |
-| 9 | Woody Wetlands % | 0.069 | Negative |
-| 10 | Horse Density | 0.061 | Negative |
+| Rank | Feature | Mean \|SHAP\| (years) | Direction |
+|------|---------|-----------------------|-----------|
+| 1 | Nighttime Cooling Efficiency | 0.363 | Divergent |
+| 2 | Nighttime LST (10th pct) | 0.202 | Negative |
+| 3 | Nighttime LST (25th pct) | 0.163 | Negative |
+| 4 | Nighttime LST (Mean) | 0.095 | Negative |
+| 5 | Wetland Flood Risk Index | 0.083 | Negative |
+| 6 | Developed (Med Intensity) % | 0.080 | Positive |
+| 7 | Nighttime LST (Median) | 0.075 | Negative |
+| 8 | Nighttime LST (75th pct) | 0.062 | Negative |
+| 9 | Nighttime LST (90th pct) | 0.054 | Negative |
+| 10 | Pig Density | ~0.050 | Positive (up to saturation) |
 
 ### Policy-Actionable Thresholds
-- **9.2°C** nighttime LST → heat mitigation priority threshold
-- **≈4%** corn county coverage → agricultural benefit saturation
-- **473 head/km²** cattle density → CAFO oversight inflection
-- **>20% forest cover** → 54% attenuation of heat-driven LE penalty
+- **9.2°C Nighttime LST:** Essential threshold for overnight physiological recovery.
+- **501 head/km² Cattle Density:** Inflection point where generalized rural metrics transition to concentrated environmental burden.
+- **8% Developed Open Space:** Point at which suburban park benefits saturate.
+- **>20% Forest Cover:** Provides a 54% attenuation of heat-driven life expectancy penalties during severe thermal stress.
+- **Soil Moisture 'Goldilocks Zone':** Peak agricultural productivity/health benefits occur at SM ≈ 5.7, turning sharply negative above the 8.5 waterlogging threshold.
 
 ---
 
@@ -220,27 +217,14 @@ Daytime LST  (all 7 features):   0.255 years cumulative |SHAP|
   author  = {Lary, David J and [co-authors]},
   title   = {Multimodal Fusion of Remote Sensing and Agricultural Data
              for High-Resolution Life Expectancy Prediction},
-  journal = {Remote Sensing},
-  year    = {2024},
+  journal = {Sensors},
+  year    = {2026},
   volume  = {XX},
   number  = {XX},
   pages   = {XXXX},
-  doi     = {10.3390/rsXXXXXXXX}
+  doi     = {10.3390/sXXXXXXXX}
 }
 ```
-
----
-
-## 📦 Data Availability
-
-Processed county-year feature matrices and model outputs are archived at:
-**Zenodo: https://doi.org/10.5281/zenodo.XXXXXXX**
-
-Raw satellite data is freely accessible via:
-- [Google Earth Engine](https://earthengine.google.com/) (account required)
-- [NASA Earthdata](https://earthdata.nasa.gov/) (MODIS products)
-- [USDA NASS](https://nassgeodata.gmu.edu/CropScape/) (Cropland Data Layer)
-- [ESA Climate Office](https://climate.esa.int/en/projects/soil-moisture/) (CCI Soil Moisture)
 
 ---
 
