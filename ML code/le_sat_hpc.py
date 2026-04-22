@@ -36,7 +36,6 @@ print("MULTIMODAL LIFE EXPECTANCY PREDICTION - UNIFIED HPC PIPELINE")
 print("="*80)
 print(f"Start time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
-# ---> CHANGE THIS PATH IF YOUR CSV IS NOT IN THE SAME FOLDER AS THE SCRIPT <---
 DATA_FILE = './full_clean_engineered_dataset_with_LE.csv'
 
 OUTPUT_DIR_PHASE1 = Path('results_individual_modalities_final')
