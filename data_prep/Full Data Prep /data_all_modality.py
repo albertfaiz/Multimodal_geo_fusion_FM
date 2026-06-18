@@ -1543,6 +1543,106 @@ if __name__ == "__main__":
         process_sensor_master(name, pattern)
 
 
+#Prof of concept code for sensitivity analysis of spatial aggregation scale on zonal statistics. This code runs the exact same GEE reduction as your main pipeline but at multiple scales (100m, 250m, 500m, 1000m) and compares the results to see if the variance in county means exceeds 2%. It uses a representative continuous dataset (MODIS NDVI) for California counties as a test case. The results are printed and saved to a CSV for further analysis. 
+
+import ee
+import pandas as pd
+import numpy as np
+
+# 1. Authenticate and Initialize
+try:
+    ee.Initialize(project='ee-faiz2009cu')
+except Exception as e:
+    ee.Authenticate()
+    ee.Initialize(project='ee-faiz2009cu')
+
+# 2. Configuration
+STATE_FIPS = '06'  # California (Great test case: agriculture, mountains, urban)
+SCALES = [100, 250, 500, 1000]
+BASELINE_SCALE = 250
+
+# Load Counties for the test state
+counties = ee.FeatureCollection('TIGER/2018/Counties').filter(ee.Filter.eq('STATEFP', STATE_FIPS))
+
+# Load a representative continuous dataset (MODIS NDVI Median for 2020)
+# We multiply by 0.0001 to restore true NDVI values (-1 to 1) for accurate percentage math
+print("Fetching satellite data...")
+img = ee.ImageCollection('MODIS/061/MOD13A1') \
+        .filterDate('2020-01-01', '2020-12-31') \
+        .select('NDVI') \
+        .median() \
+        .multiply(0.0001)
+
+results_dict = {}
+
+# 3. Execution Loop
+print("\nRunning spatial aggregation across multiple scales (this takes ~1-2 minutes)...")
+for scale in SCALES:
+    print(f" -> Extracting zonal statistics at {scale}m scale...")
+    
+    # Run the exact reduction used in your main pipeline
+    stats = img.reduceRegions(
+        collection=counties,
+        reducer=ee.Reducer.mean(),
+        scale=scale,
+        tileScale=4
+    )
+    
+    # Extract data to local python memory
+    features = stats.select(['GEOID', 'mean']).getInfo()['features']
+    
+    # Format into a clean list of dictionaries
+    data = [{'GEOID': f['properties']['GEOID'], f'mean_{scale}m': f['properties'].get('mean', np.nan)} for f in features]
+    
+    # Convert to DataFrame and store
+    df = pd.DataFrame(data)
+    results_dict[scale] = df
+
+# 4. Merge and Calculate Variance
+print("\nMerging results and calculating variance...")
+df_final = results_dict[BASELINE_SCALE].copy()
+
+for scale in SCALES:
+    if scale != BASELINE_SCALE:
+        df_final = df_final.merge(results_dict[scale], on='GEOID', how='outer')
+
+# Calculate percentage change compared to the 250m baseline
+for scale in [100, 500, 1000]:
+    col_name = f'pct_change_{scale}m'
+    # Formula: |(Test - Baseline) / Baseline| * 100
+    df_final[col_name] = (abs(df_final[f'mean_{scale}m'] - df_final[f'mean_{BASELINE_SCALE}m']) / abs(df_final[f'mean_{BASELINE_SCALE}m'])) * 100
+
+# Find the maximum variance across ALL alternative scales for each county
+pct_cols = [f'pct_change_{s}m' for s in [100, 500, 1000]]
+df_final['max_variance_pct'] = df_final[pct_cols].max(axis=1)
+
+# 5. Print Results
+print("\n" + "="*60)
+print("SENSITIVITY ANALYSIS SUMMARY (California)")
+print("="*60)
+print(f"Total Counties Analyzed: {len(df_final)}")
+max_var = df_final['max_variance_pct'].max()
+print(f"Overall Maximum Variance across any county/scale: {max_var:.4f}%")
+print(f"Average Variance across all counties: {df_final['max_variance_pct'].mean():.4f}%")
+
+print("\n------------------------------------------------------------")
+if max_var < 2.0:
+    print("✅ CLAIM VERIFIED: Variance is strictly < 2% in county means.")
+else:
+    print("❌ WARNING: Variance exceeded 2% in at least one county.")
+print("------------------------------------------------------------")
+
+print("\nTop 5 Counties with the Highest Variance:")
+print(df_final[['GEOID', f'mean_{BASELINE_SCALE}m', 'max_variance_pct']].sort_values(by='max_variance_pct', ascending=False).head(25).to_string(index=False))
+
+# 6. Save to CSV
+output_filename = 'scale_sensitivity_analysis.csv'
+df_final.to_csv(output_filename, index=False)
+print(f"\n💾 Detailed results saved locally to Colab folder as '{output_filename}'")
+
+
+
+
 
 ###################################
 # 3. Livestock dataset preparation

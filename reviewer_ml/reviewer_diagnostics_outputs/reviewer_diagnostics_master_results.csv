@@ -1,0 +1,14 @@
+Analysis,Variant,N_features,N_obs,R2_mean,R2_sd,MAE_mean,MAE_sd,RMSE_mean,RMSE_sd,MAPE_mean,MAPE_sd,Note
+Production,county-grouped 5-fold (reference),193,61680,0.6307,0.0139,1.0777,0.0214,1.4852,0.058,1.4018,0.0271,Baseline
+A_naive,predict_training_mean,0,61680,-0.0004,0.0006,1.9485,0.0392,2.4443,0.0606,2.5383,0.05,R1.1 floor baseline
+A_spatial_knn,k=4_idw,0,61680,0.6414,0.0199,1.0605,0.0397,1.4589,0.0665,1.3787,0.0505,R1.3: Needs neighbors OBSERVED LE
+A_spatial_knn,k=4_uniform,0,61680,0.6382,0.0173,1.0662,0.0406,1.4656,0.0625,1.386,0.0516,R1.3: Needs neighbors OBSERVED LE
+A_spatial_knn,k=8_idw,0,61680,0.6564,0.0185,1.035,0.0404,1.4282,0.0657,1.3453,0.0516,R1.3: Needs neighbors OBSERVED LE
+C_temporal_holdout,train<=2014_test>=2015,193,61680,0.6985,0.0,1.0575,0.0,1.4364,0.0,1.3729,0.0,R3.3
+C_temporal_holdout,train<=2009_test>=2010,193,61680,0.6936,0.0,0.995,0.0,1.3992,0.0,1.2778,0.0,R3.3
+C_state_groupcv,leave-states-out 5-fold,193,61680,0.4636,0.0836,1.3147,0.1142,1.7623,0.1427,1.7072,0.1483,R1.5 proper spatial-block CV
+C_state_random_10_40,train 10 states / test 40 (8 random draws),193,61680,0.3134,0.0604,1.504,0.0587,1.9951,0.0933,1.9546,0.0809,R1.5 exact request
+D_temporally_complete,drop Landsat8-9 + Sentinel-1/2,119,61680,0.6178,0.0121,1.0983,0.0195,1.5108,0.0513,1.4286,0.0235,R3.5
+D_modern_only,2015-2019 county-years,193,15420,0.6122,0.018,1.1906,0.0361,1.6279,0.0556,1.5441,0.044,R2.1
+E_drift_detrended,year-detrended LST,192,61680,0.6317,0.0147,1.0745,0.0224,1.4833,0.0614,1.3976,0.0281,R3.4
+G_perfold_pruning,pruning fit on TRAIN fold only,188,61680,0.629,0.0143,1.0795,0.0215,1.4887,0.0595,1.404,0.0271,R4.7

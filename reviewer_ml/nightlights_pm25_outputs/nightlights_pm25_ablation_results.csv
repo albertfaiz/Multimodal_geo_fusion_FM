@@ -1,0 +1,8 @@
+Analysis,Variant,N_features,N_obs,R2_mean,R2_sd,MAE_mean,MAE_sd,RMSE_mean,RMSE_sd,MAPE_mean,MAPE_sd,Note
+NTL_PM25,full_reference,193,61680,0.6307,0.0139,1.0777,0.0214,1.4852,0.058,1.4018,0.0271,Production satellite-only model (no NTL/PM2.5)
+NTL_PM25,NTL_only,7,61680,0.0861,0.0217,1.8387,0.0345,2.336,0.0603,2.3941,0.0434,R1.4: nighttime lights as the SOLE feature set.
+NTL_PM25,PM25_only,7,61680,0.1652,0.0261,1.7344,0.0531,2.2327,0.0696,2.2594,0.0685,R3.1: PM2.5 as the sole feature set.
+NTL_PM25,NTL_plus_PM25_only,14,61680,0.3368,0.0228,1.5176,0.0378,1.9898,0.0562,1.9773,0.0483,Pure pollution/urbanisation proxy set.
+NTL_PM25,full_plus_NTL,200,61680,0.6327,0.0137,1.0749,0.0217,1.4813,0.058,1.3981,0.0274,Marginal value of adding NTL.
+NTL_PM25,full_plus_PM25,200,61680,0.6331,0.0145,1.0742,0.0223,1.4803,0.06,1.3972,0.0282,Marginal value of adding PM2.5.
+NTL_PM25,full_plus_NTL_PM25,207,61680,0.6342,0.0138,1.0718,0.0209,1.4781,0.0586,1.394,0.0262,Fused model with both.
