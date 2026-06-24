@@ -1,0 +1,7 @@
+Model,R2_mean,R2_sd,MAE_mean,RMSE_mean
+lat+lon+year | county-grouped CV (prod folds),0.525,0.0255,1.2589,1.7328
+lat+lon+year | leave-states-out CV,0.2034,0.2806,1.6253,2.186
+year only    | county-grouped CV,0.0021,0.0012,2.0038,2.5121
+lat+lon only | county-grouped CV,0.5185,0.0255,1.2734,1.7447
+satellite + SDOH features only | county-grouped CV,0.8943,0.0103,0.5665,0.8168
+satellite + SDOH + lat/lon/year | county-grouped,0.8951,0.0101,0.5633,0.8136
